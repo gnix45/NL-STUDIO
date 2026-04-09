@@ -58,7 +58,7 @@ export default function WithdrawalsPage() {
     <div style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <h1 className="font-display" style={{ color: '#F8F7F4', fontSize: '24px', margin: 0 }}>
-          Retraits Fapshi
+          Retraits
         </h1>
         <button
           onClick={loadData}
