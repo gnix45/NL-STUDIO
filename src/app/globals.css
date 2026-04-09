@@ -403,10 +403,10 @@ select {
 
 /* Navbar responsive */
 .desktop-nav {
-  display: none;
+  display: none !important;
 }
 .mobile-nav-btn {
-  display: flex;
+  display: flex !important;
 }
 @media (min-width: 768px) {
   .desktop-nav {
