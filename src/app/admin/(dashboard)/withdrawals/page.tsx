@@ -55,8 +55,8 @@ export default function WithdrawalsPage() {
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+    <div style={{ padding: 'clamp(12px, 3vw, 24px)', maxWidth: '800px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
         <h1 className="font-display" style={{ color: '#F8F7F4', fontSize: '24px', margin: 0 }}>
           Retraits
         </h1>
@@ -72,7 +72,7 @@ export default function WithdrawalsPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
         <div style={{ background: '#1A1A1A', border: '1px solid rgba(248, 247, 244, 0.06)', padding: '24px' }}>
           <span style={{ color: '#6B6B6B', fontSize: '12px', display: 'block', marginBottom: '8px' }}>SOLDE DISPONIBLE</span>
-          <span className="font-display" style={{ color: '#F8F7F4', fontSize: '32px', fontWeight: 600 }}>{formatXAF(data?.availableBalance || 0)}</span>
+          <span className="font-display" style={{ color: '#F8F7F4', fontSize: 'clamp(20px, 5vw, 32px)', fontWeight: 600 }}>{formatXAF(data?.availableBalance || 0)}</span>
         </div>
         <div style={{ background: '#0C0C0C', border: '1px solid rgba(248, 247, 244, 0.06)', padding: '24px' }}>
           <span style={{ color: '#6B6B6B', fontSize: '12px', display: 'block', marginBottom: '8px' }}>REVENU BRUT TOTAL</span>
@@ -85,7 +85,7 @@ export default function WithdrawalsPage() {
         <h2 style={{ color: '#F8F7F4', fontSize: '16px', marginTop: 0, marginBottom: '24px' }}>Demander un retrait</h2>
         
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ flex: 1 }}>
               <label style={{ display: 'block', color: '#6B6B6B', fontSize: '13px', marginBottom: '8px' }}>Montant a retirer (XAF)</label>
               <input 
@@ -139,7 +139,7 @@ export default function WithdrawalsPage() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {data?.history?.map((w: any) => (
-              <div key={w.created_at} style={{ background: '#0C0C0C', border: '1px solid rgba(248, 247, 244, 0.06)', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div key={w.created_at} style={{ background: '#0C0C0C', border: '1px solid rgba(248, 247, 244, 0.06)', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
                 <div>
                   <span style={{ color: '#F8F7F4', fontSize: '15px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
                     {formatXAF(w.amount)}

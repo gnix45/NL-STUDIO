@@ -41,7 +41,7 @@ export function detectCarrier(phone: string): 'mtn' | 'orange' | null {
 /**
  * Get the Fapshi medium string from carrier.
  */
-export function carrierToMedium(carrier: 'mtn' | 'orange'): string {
+export function carrierToMedium(carrier: 'mtn' | 'orange'): 'mobile money' | 'orange money' {
   return carrier === 'mtn' ? 'mobile money' : 'orange money'
 }
 
@@ -62,9 +62,15 @@ export const checkoutSchema = z.object({
     .refine((val) => phoneRegex.test(val), {
       message: 'Numero de telephone camerounais invalide',
     }),
+  whatsapp: z
+    .string()
+    .min(8, 'Le numero WhatsApp est trop court')
+    .transform((val) => val.replace(/[\s\-().+]/g, '')),
   productId: z
     .string()
     .uuid('Identifiant produit invalide'),
+  variantName: z.string().optional(),
+  deliveryAddress: z.string().optional(),
 })
 
 export const contentUpdateSchema = z.object({
@@ -81,6 +87,11 @@ export const productSchema = z.object({
   product_link: z.string().min(1, 'Le lien produit est requis'),
   category: z.string().default('Digital'),
   active: z.boolean().default(true),
+  is_physical: z.boolean().default(false),
+  variants: z.array(z.object({
+    name: z.string().min(1),
+    price: z.number().int().min(100)
+  })).optional().default([]),
 })
 
 export const transIdSchema = z

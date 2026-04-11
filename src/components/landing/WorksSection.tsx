@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { WorksGalleryClient } from './WorksGalleryClient'
 
 export async function WorksSection() {
   const supabase = createServiceRoleClient()
@@ -41,56 +42,7 @@ export async function WorksSection() {
           Travaux recents
         </h2>
 
-        <div className="works-grid">
-          {displayWorks.map((work, i) => (
-            <div
-              key={i}
-              className="img-overlay"
-              style={{
-                aspectRatio: i < 2 ? '4/3' : i < 4 ? '1/1' : '4/3',
-                background: work.image_url ? `url(${work.image_url}) center/cover` : work.color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {/* Placeholder initial si pas d'image */}
-              {!work.image_url && (
-                <span
-                  className="font-display"
-                  style={{
-                    color: 'rgba(248, 247, 244, 0.08)',
-                    fontSize: 'clamp(4rem, 8vw, 8rem)',
-                    userSelect: 'none',
-                    lineHeight: 1,
-                  }}
-                >
-                  {work.title.charAt(0)}
-                </span>
-              )}
-
-              {/* Hover overlay content */}
-              <div className="overlay-content">
-                <span
-                  className="text-label"
-                  style={{ color: '#D42B2B', marginBottom: '8px' }}
-                >
-                  {work.label}
-                </span>
-                <span
-                  className="font-display"
-                  style={{
-                    color: '#F8F7F4',
-                    fontSize: 'clamp(1rem, 2vw, 1.5rem)',
-                    fontWeight: 700,
-                  }}
-                >
-                  {work.title}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+        <WorksGalleryClient works={displayWorks} />
       </div>
     </section>
   )

@@ -29,7 +29,7 @@ export default async function AdminOrdersPage() {
   const supabase = createServiceRoleClient()
   const { data: orders } = await supabase
     .from('orders')
-    .select('id, product_name, buyer_name, buyer_email, amount, carrier, status, fapshi_trans_id, email_sent, created_at')
+    .select('id, product_name, buyer_name, buyer_email, buyer_phone, buyer_whatsapp, amount, carrier, status, fapshi_trans_id, email_sent, created_at, variant_name, delivery_address')
     .order('created_at', { ascending: false })
     .limit(100)
 
@@ -47,12 +47,12 @@ export default async function AdminOrdersPage() {
             borderCollapse: 'collapse',
             background: '#1A1A1A',
             fontSize: '13px',
-            minWidth: '700px',
+            minWidth: '900px',
           }}
         >
           <thead>
             <tr style={{ borderBottom: '1px solid rgba(248,247,244,0.06)' }}>
-              {['Produit', 'Client', 'Montant', 'Carrier', 'Statut', 'Email', 'Date'].map((h) => (
+              {['Produit', 'Client', 'Contact', 'Montant', 'Carrier', 'Statut', 'Date'].map((h) => (
                 <th
                   key={h}
                   style={{
@@ -83,17 +83,33 @@ export default async function AdminOrdersPage() {
                   key={order.id}
                   style={{ borderBottom: '1px solid rgba(248,247,244,0.03)' }}
                 >
-                  <td style={{ padding: '10px 14px', color: '#F8F7F4' }}>
-                    {order.product_name}
+                  <td style={{ padding: '10px 14px', color: '#F8F7F4', verticalAlign: 'top' }}>
+                    <div style={{ fontWeight: 600, marginBottom: '4px' }}>{order.product_name}</div>
+                    {order.variant_name && (
+                      <div style={{ color: '#888', fontSize: '11px', display: 'inline-block', background: 'rgba(248,247,244,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                        Variante: {order.variant_name}
+                      </div>
+                    )}
                   </td>
-                  <td style={{ padding: '10px 14px' }}>
-                    <span style={{ color: '#F8F7F4', display: 'block' }}>{order.buyer_name}</span>
-                    <span style={{ color: '#6B6B6B', fontSize: '11px' }}>{order.buyer_email}</span>
+                  <td style={{ padding: '10px 14px', verticalAlign: 'top' }}>
+                    <span style={{ color: '#F8F7F4', display: 'block', fontWeight: 500 }}>{order.buyer_name}</span>
+                    {order.delivery_address ? (
+                      <div style={{ color: '#D42B2B', fontSize: '11px', background: 'rgba(212,43,43,0.1)', padding: '2px 4px', borderRadius: '4px', display: 'inline-flex', marginTop: '4px', maxWidth: '200px' }}>
+                        Livraison: {order.delivery_address}
+                      </div>
+                    ) : (
+                      <span style={{ color: '#6B6B6B', fontSize: '11px', display: 'block' }}>Livraison N.</span>
+                    )}
                   </td>
-                  <td style={{ padding: '10px 14px', color: '#F8F7F4', fontWeight: 600 }}>
+                  <td style={{ padding: '10px 14px', verticalAlign: 'top', minWidth: '150px' }}>
+                    <span style={{ color: '#6B6B6B', fontSize: '11px', display: 'block' }}>Email: {order.buyer_email}</span>
+                    <span style={{ color: '#25D366', fontSize: '11px', display: 'block' }}>WA: +{order.buyer_whatsapp}</span>
+                    <span style={{ color: '#6B6B6B', fontSize: '11px', display: 'block' }}>Tel: +{order.buyer_phone}</span>
+                  </td>
+                  <td style={{ padding: '10px 14px', color: '#F8F7F4', fontWeight: 600, verticalAlign: 'top' }}>
                     {formatXAF(order.amount)}
                   </td>
-                  <td style={{ padding: '10px 14px' }}>
+                  <td style={{ padding: '10px 14px', verticalAlign: 'top' }}>
                     <span
                       style={{
                         color: order.carrier === 'mtn' ? '#FFCC00' : '#FF6600',
@@ -105,7 +121,7 @@ export default async function AdminOrdersPage() {
                       {order.carrier}
                     </span>
                   </td>
-                  <td style={{ padding: '10px 14px' }}>
+                  <td style={{ padding: '10px 14px', verticalAlign: 'top' }}>
                     <span
                       style={{
                         color: statusColor(order.status),
@@ -116,10 +132,7 @@ export default async function AdminOrdersPage() {
                       {statusLabel(order.status)}
                     </span>
                   </td>
-                  <td style={{ padding: '10px 14px', color: '#6B6B6B' }}>
-                    {order.email_sent ? 'Oui' : 'Non'}
-                  </td>
-                  <td style={{ padding: '10px 14px', color: '#6B6B6B', whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '10px 14px', color: '#6B6B6B', whiteSpace: 'nowrap', verticalAlign: 'top' }}>
                     {new Date(order.created_at).toLocaleString('fr-FR')}
                   </td>
                 </tr>

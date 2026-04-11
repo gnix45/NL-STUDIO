@@ -26,7 +26,7 @@ export default async function ProductPage({
     const supabase = createServiceRoleClient()
     const { data, error } = await supabase
       .from('products')
-      .select('id, name, description, price, image_url, category')
+      .select('id, name, description, price, image_url, category, is_physical, variants')
       .eq('id', id)
       .eq('active', true)
       .single()
@@ -36,6 +36,11 @@ export default async function ProductPage({
   } catch {
     notFound()
   }
+
+  const variants = (product.variants || []) as { name: string; price: number }[]
+  const displayPrice = variants.length > 0
+    ? Math.min(product.price, ...variants.map((v: { price: number }) => v.price))
+    : product.price
 
   return (
     <>
@@ -123,6 +128,11 @@ export default async function ProductPage({
               style={{ color: '#D42B2B', marginBottom: '12px', display: 'block' }}
             >
               {product.category}
+              {product.is_physical && (
+                <span style={{ marginLeft: '8px', color: '#6B6B6B', fontSize: '11px' }}>
+                  — Livraison physique
+                </span>
+              )}
             </span>
 
             <h1
@@ -156,7 +166,7 @@ export default async function ProductPage({
                 className="font-display"
                 style={{ color: '#0C0C0C', fontSize: 'clamp(1.25rem, 2vw, 1.75rem)' }}
               >
-                {formatXAF(product.price)}
+                {variants.length > 0 ? `A partir de ${formatXAF(displayPrice)}` : formatXAF(product.price)}
               </span>
             </div>
 
@@ -165,6 +175,8 @@ export default async function ProductPage({
               productId={product.id}
               productName={product.name}
               price={product.price}
+              isPhysical={product.is_physical ?? false}
+              variants={variants}
             />
           </div>
         </div>

@@ -5,10 +5,17 @@ import Link from 'next/link'
 import { IconSpinner, IconCheckCircle, IconXCircle } from '@/components/icons'
 import { sanitizePhone, detectCarrier } from '@/lib/validation'
 
+interface ProductVariant {
+  name: string
+  price: number
+}
+
 interface CheckoutFormProps {
   productId: string
   productName: string
   price: number
+  isPhysical: boolean
+  variants: ProductVariant[]
 }
 
 type FormState = 'form' | 'pending' | 'success' | 'error'
@@ -17,16 +24,26 @@ function formatXAF(amount: number) {
   return new Intl.NumberFormat('fr-FR').format(amount) + ' XAF'
 }
 
-export function CheckoutForm({ productId, productName, price }: CheckoutFormProps) {
+export function CheckoutForm({ productId, productName, price, isPhysical, variants }: CheckoutFormProps) {
   const [state, setState] = useState<FormState>('form')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [whatsapp, setWhatsapp] = useState('')
   const [carrier, setCarrier] = useState<'mtn' | 'orange' | null>(null)
   const [transId, setTransId] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [pollCount, setPollCount] = useState(0)
+  const [selectedVariant, setSelectedVariant] = useState<string>(variants.length > 0 ? variants[0].name : '')
+  const [deliveryAddress, setDeliveryAddress] = useState('')
+
+  // Compute the active price based on variant selection
+  const activePrice = variants.length > 0
+    ? (variants.find(v => v.name === selectedVariant)?.price ?? price)
+    : price
+  const fee = Math.ceil(activePrice * 0.03)
+  const totalAmount = activePrice + fee
 
   // Auto-detect carrier on phone input
   useEffect(() => {
@@ -44,6 +61,12 @@ export function CheckoutForm({ productId, productName, price }: CheckoutFormProp
     setSubmitting(true)
     setErrorMsg('')
 
+    if (isPhysical && deliveryAddress.trim().length < 5) {
+      setErrorMsg("L'adresse de livraison est requise (minimum 5 caracteres).")
+      setSubmitting(false)
+      return
+    }
+
     try {
       const res = await fetch('/api/checkout', {
         method: 'POST',
@@ -51,7 +74,15 @@ export function CheckoutForm({ productId, productName, price }: CheckoutFormProp
           'Content-Type': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
         },
-        body: JSON.stringify({ name, email, phone, productId }),
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          whatsapp,
+          productId,
+          variantName: variants.length > 0 ? selectedVariant : undefined,
+          deliveryAddress: isPhysical ? deliveryAddress : undefined,
+        }),
       })
 
       const data = await res.json()
@@ -206,6 +237,44 @@ export function CheckoutForm({ productId, productName, price }: CheckoutFormProp
   return (
     <form onSubmit={handleSubmit}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+        {/* Variant selector */}
+        {variants.length > 0 && (
+          <div>
+            <label
+              htmlFor="checkout-variant"
+              style={{ color: '#6B6B6B', fontSize: '13px', display: 'block', marginBottom: '6px' }}
+            >
+              Choisir une variante
+            </label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {variants.map((v) => (
+                <button
+                  key={v.name}
+                  type="button"
+                  onClick={() => setSelectedVariant(v.name)}
+                  style={{
+                    padding: '10px 16px',
+                    border: selectedVariant === v.name ? '2px solid #D42B2B' : '1px solid #EFEFEC',
+                    background: selectedVariant === v.name ? 'rgba(212,43,43,0.05)' : '#FFFFFF',
+                    color: '#0C0C0C',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    borderRadius: '4px',
+                    transition: 'all 0.2s',
+                    minHeight: '44px',
+                  }}
+                >
+                  <span style={{ fontWeight: 600 }}>{v.name}</span>
+                  <span style={{ display: 'block', fontSize: '12px', color: '#6B6B6B', marginTop: '2px' }}>
+                    {formatXAF(v.price)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div>
           <label
             htmlFor="checkout-name"
@@ -307,22 +376,85 @@ export function CheckoutForm({ productId, productName, price }: CheckoutFormProp
           )}
         </div>
 
+        <div>
+          <label
+            htmlFor="checkout-whatsapp"
+            style={{ color: '#6B6B6B', fontSize: '13px', display: 'block', marginBottom: '6px' }}
+          >
+            Numero WhatsApp <span style={{ color: '#D42B2B' }}>*</span>
+          </label>
+          <input
+            id="checkout-whatsapp"
+            type="tel"
+            value={whatsapp}
+            onChange={(e) => setWhatsapp(e.target.value)}
+            required
+            minLength={8}
+            placeholder="Ex: 6XX XXX XXX"
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              border: '1px solid #EFEFEC',
+              background: '#FFFFFF',
+              fontSize: '16px',
+              color: '#0C0C0C',
+              outline: 'none',
+              transition: 'border-color 0.2s',
+              minHeight: '44px',
+              boxSizing: 'border-box',
+            }}
+          />
+        </div>
+
+        {/* Delivery address for physical products */}
+        {isPhysical && (
+          <div>
+            <label
+              htmlFor="checkout-address"
+              style={{ color: '#6B6B6B', fontSize: '13px', display: 'block', marginBottom: '6px' }}
+            >
+              Adresse de livraison <span style={{ color: '#D42B2B' }}>*</span>
+            </label>
+            <textarea
+              id="checkout-address"
+              value={deliveryAddress}
+              onChange={(e) => setDeliveryAddress(e.target.value)}
+              required
+              minLength={5}
+              rows={3}
+              placeholder="Ville, quartier, repere..."
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: '1px solid #EFEFEC',
+                background: '#FFFFFF',
+                fontSize: '16px',
+                color: '#0C0C0C',
+                outline: 'none',
+                transition: 'border-color 0.2s',
+                resize: 'vertical',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+        )}
+
         {errorMsg && (
           <p style={{ color: '#D42B2B', fontSize: '13px', margin: 0 }}>{errorMsg}</p>
         )}
 
         <div style={{ marginTop: '8px', padding: '16px', background: '#F8F7F4', border: '1px solid #EFEFEC' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px', color: '#6B6B6B' }}>
-            <span>Prix (Net)</span>
-            <span>{formatXAF(price)}</span>
+            <span>Prix{selectedVariant ? ` (${selectedVariant})` : ''}</span>
+            <span>{formatXAF(activePrice)}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px', color: '#6B6B6B' }}>
             <span>Frais (3%)</span>
-            <span>{formatXAF(Math.ceil(price * 0.03))}</span>
+            <span>{formatXAF(fee)}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', fontWeight: 600, color: '#0C0C0C', borderTop: '1px solid #EFEFEC', paddingTop: '8px' }}>
             <span>Total</span>
-            <span>{formatXAF(Math.ceil(price * 1.03))}</span>
+            <span>{formatXAF(totalAmount)}</span>
           </div>
         </div>
 
@@ -350,7 +482,7 @@ export function CheckoutForm({ productId, productName, price }: CheckoutFormProp
           {submitting ? (
             <IconSpinner size={18} color="#F8F7F4" />
           ) : (
-            `Payer ${formatXAF(Math.ceil(price * 1.05))}`
+            `Payer ${formatXAF(totalAmount)}`
           )}
         </button>
       </div>

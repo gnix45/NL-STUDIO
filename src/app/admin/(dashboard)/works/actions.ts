@@ -24,7 +24,8 @@ export async function createWork(formData: FormData) {
   const title = formData.get('title') as string
   const description = formData.get('description') as string
   const color = formData.get('color') as string || '#1A1A1A'
-  const image_url = formData.get('image_url') as string
+  const rawImageUrl = formData.get('image_url') as string
+  const image_url = rawImageUrl ? rawImageUrl.split('\n').map(u => u.trim()).filter(Boolean).join(',') : null
   const order_index = parseInt(formData.get('order_index') as string || '0')
   const active = formData.get('active') === 'true'
 
@@ -52,7 +53,9 @@ export async function updateWork(id: string, formData: FormData) {
   const title = formData.get('title') as string
   const description = formData.get('description') as string
   const color = formData.get('color') as string
-  const image_url = formData.get('image_url') as string
+  const rawImageUrl = formData.get('image_url') as string
+  const image_url = rawImageUrl ? rawImageUrl.split('\n').map(u => u.trim()).filter(Boolean).join(',') : null
+
   const order_index = parseInt(formData.get('order_index') as string || '0')
   const active = formData.get('active') !== 'false'
 

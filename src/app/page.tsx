@@ -33,9 +33,11 @@ const defaults: Record<string, Record<string, string>> = {
   contact: {
     title: 'Discutons de votre projet',
     whatsapp: '+237691239985',
+    email: 'nlstudio203@gmail.com',
+  },
+  social: {
     instagram: 'https://instagram.com/nl.studio',
-    behance: 'https://behance.net/nlstudio',
-    email: 'tectrib@gmail.com',
+    facebook: 'https://facebook.com/nlstudio',
   },
   store: {
     title: 'Boutique',
@@ -76,7 +78,7 @@ export default async function HomePage() {
         <AboutSection content={content.about} />
         <WorkflowSection />
         <WorksSection />
-        <ContactSection content={content.contact} />
+        <ContactSection content={content.contact} social={content.social} />
       </main>
       <FooterSection />
       <WhatsAppButton phone={content.contact?.whatsapp || '+237691239985'} />

@@ -4,6 +4,11 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { IconPlus, IconTrash, IconEdit, IconSpinner, IconSearch } from '@/components/icons'
 
+interface ProductVariant {
+  name: string
+  price: number
+}
+
 interface Product {
   id: string
   name: string
@@ -13,6 +18,8 @@ interface Product {
   product_link: string
   category: string
   active: boolean
+  is_physical: boolean
+  variants: ProductVariant[]
   created_at: string
 }
 
@@ -35,6 +42,8 @@ export default function AdminProductsPage() {
   const [productLink, setProductLink] = useState('')
   const [category, setCategory] = useState('Digital')
   const [active, setActive] = useState(true)
+  const [isPhysical, setIsPhysical] = useState(false)
+  const [variants, setVariants] = useState<ProductVariant[]>([])
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
 
@@ -60,6 +69,8 @@ export default function AdminProductsPage() {
     setProductLink('')
     setCategory('Digital')
     setActive(true)
+    setIsPhysical(false)
+    setVariants([])
     setEditing(null)
     setShowForm(false)
     setFormError('')
@@ -74,6 +85,8 @@ export default function AdminProductsPage() {
     setProductLink(product.product_link)
     setCategory(product.category)
     setActive(product.active)
+    setIsPhysical(product.is_physical ?? false)
+    setVariants(product.variants || [])
     setShowForm(true)
   }
 
@@ -84,7 +97,7 @@ export default function AdminProductsPage() {
 
     const priceNum = parseInt(price, 10)
     if (isNaN(priceNum) || priceNum < 100) {
-      setFormError('Le prix minimum est 100 XAF.')
+      setFormError('Le prix de base minimum est 100 XAF.')
       setSaving(false)
       return
     }
@@ -97,6 +110,8 @@ export default function AdminProductsPage() {
       product_link: productLink,
       category,
       active,
+      is_physical: isPhysical,
+      variants,
     }
 
     try {
@@ -136,6 +151,20 @@ export default function AdminProductsPage() {
       body: JSON.stringify({ id }),
     })
     fetchProducts()
+  }
+
+  const addVariant = () => {
+    setVariants([...variants, { name: '', price: 1000 }])
+  }
+
+  const updateVariant = (index: number, field: keyof ProductVariant, value: string | number) => {
+    const newVariants = [...variants]
+    newVariants[index] = { ...newVariants[index], [field]: value }
+    setVariants(newVariants)
+  }
+
+  const removeVariant = (index: number) => {
+    setVariants(variants.filter((_, i) => i !== index))
   }
 
   const filtered = products.filter((p) =>
@@ -218,13 +247,37 @@ export default function AdminProductsPage() {
             padding: '24px',
             marginBottom: '24px',
             border: '1px solid rgba(248,247,244,0.06)',
+            overflowX: 'auto',
           }}
         >
           <h3 className="font-display" style={{ color: '#F8F7F4', fontSize: '16px', margin: '0 0 20px' }}>
             {editing ? 'Modifier le produit' : 'Nouveau produit'}
           </h3>
           <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+              
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
+                <label style={{ color: '#F8F7F4', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={isPhysical}
+                    onChange={(e) => setIsPhysical(e.target.checked)}
+                    style={{ width: '18px', height: '18px', accentColor: '#D42B2B' }}
+                  />
+                  Ce produit necessite une livraison physique
+                </label>
+                
+                <label style={{ color: '#F8F7F4', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={active}
+                    onChange={(e) => setActive(e.target.checked)}
+                    style={{ width: '18px', height: '18px', accentColor: '#D42B2B' }}
+                  />
+                  Actif (visible en boutique)
+                </label>
+              </div>
+
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -239,11 +292,12 @@ export default function AdminProductsPage() {
                 rows={3}
                 style={{ padding: '10px 14px', background: '#0C0C0C', border: '1px solid #333', color: '#F8F7F4', fontSize: '14px', resize: 'vertical', boxSizing: 'border-box' }}
               />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
                 <input
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
-                  placeholder="Prix (XAF)"
+                  placeholder={variants.length > 0 ? "Prix de base / minimum (XAF)" : "Prix (XAF)"}
                   type="number"
                   min="100"
                   required
@@ -256,6 +310,7 @@ export default function AdminProductsPage() {
                   style={{ padding: '10px 14px', background: '#0C0C0C', border: '1px solid #333', color: '#F8F7F4', fontSize: '14px', boxSizing: 'border-box' }}
                 />
               </div>
+
               <input
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
@@ -265,19 +320,59 @@ export default function AdminProductsPage() {
               <input
                 value={productLink}
                 onChange={(e) => setProductLink(e.target.value)}
-                placeholder="Lien de telechargement"
+                placeholder={isPhysical ? "Lien (facture/preuve/document associe)" : "Lien de telechargement"}
                 required
                 style={{ padding: '10px 14px', background: '#0C0C0C', border: '1px solid #333', color: '#F8F7F4', fontSize: '14px', boxSizing: 'border-box' }}
               />
-              <label style={{ color: '#6B6B6B', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <input
-                  type="checkbox"
-                  checked={active}
-                  onChange={(e) => setActive(e.target.checked)}
-                  style={{ width: '16px', height: '16px' }}
-                />
-                Actif (visible en boutique)
-              </label>
+
+              {/* Variants Section */}
+              <div style={{ background: '#0C0C0C', padding: '16px', borderRadius: '4px', border: '1px solid #333' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <span style={{ color: '#F8F7F4', fontSize: '14px', fontWeight: 600 }}>Variantes (Optionnel)</span>
+                  <button
+                    type="button"
+                    onClick={addVariant}
+                    style={{ background: 'rgba(248,247,244,0.1)', border: 'none', color: '#F8F7F4', padding: '6px 12px', fontSize: '12px', cursor: 'pointer', borderRadius: '4px' }}
+                  >
+                    + Ajouter variante
+                  </button>
+                </div>
+                
+                {variants.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {variants.map((v, idx) => (
+                      <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '8px', alignItems: 'center' }}>
+                        <input 
+                          value={v.name}
+                          onChange={(e) => updateVariant(idx, 'name', e.target.value)}
+                          placeholder="Nom (ex: Couleur Rouge, 100g)"
+                          required
+                          style={{ padding: '8px 12px', background: '#1A1A1A', border: '1px solid #333', color: '#F8F7F4', fontSize: '13px' }}
+                        />
+                        <input 
+                          value={v.price}
+                          type="number"
+                          min="100"
+                          onChange={(e) => updateVariant(idx, 'price', parseInt(e.target.value) || 0)}
+                          placeholder="Prix (XAF)"
+                          required
+                          style={{ padding: '8px 12px', background: '#1A1A1A', border: '1px solid #333', color: '#F8F7F4', fontSize: '13px' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeVariant(idx)}
+                          style={{ background: 'none', border: 'none', color: '#D42B2B', cursor: 'pointer', padding: '8px' }}
+                        >
+                          <IconTrash size={16} color="#D42B2B" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ color: '#6B6B6B', fontSize: '13px', margin: 0 }}>Aucune variante specifiee.</p>
+                )}
+              </div>
+
               {formError && <p style={{ color: '#D42B2B', fontSize: '13px', margin: 0 }}>{formError}</p>}
               <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
                 <button
@@ -321,7 +416,7 @@ export default function AdminProductsPage() {
       )}
 
       {/* Product list */}
-      <div style={{ background: '#1A1A1A' }}>
+      <div style={{ background: '#1A1A1A', overflowX: 'auto' }}>
         {filtered.length === 0 ? (
           <p style={{ color: '#6B6B6B', padding: '32px', textAlign: 'center', fontSize: '14px' }}>
             Aucun produit trouve.
@@ -338,13 +433,24 @@ export default function AdminProductsPage() {
                 justifyContent: 'space-between',
                 gap: '12px',
                 flexWrap: 'wrap',
+                minWidth: 'min-content'
               }}
             >
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <span style={{ color: '#F8F7F4', fontSize: '14px', fontWeight: 500 }}>
+              <div style={{ flex: 1, minWidth: 'min-content' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                  <span style={{ color: '#F8F7F4', fontSize: '14px', fontWeight: 500, whiteSpace: 'nowrap' }}>
                     {product.name}
                   </span>
+                  {product.is_physical && (
+                    <span style={{ color: '#D42B2B', fontSize: '10px', background: 'rgba(212,43,43,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                      Pysi.
+                    </span>
+                  )}
+                  {product.variants && product.variants.length > 0 && (
+                    <span style={{ color: '#888', fontSize: '10px', background: 'rgba(248,247,244,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                      {product.variants.length} Var.
+                    </span>
+                  )}
                   {!product.active && (
                     <span style={{ color: '#6B6B6B', fontSize: '11px', border: '1px solid #333', padding: '1px 6px' }}>
                       Inactif

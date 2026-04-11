@@ -92,7 +92,7 @@ export default function WorksAdminPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
           {works.map((work) => (
             <div key={work.id} style={{ background: '#1A1A1A', border: '1px solid rgba(248, 247, 244, 0.1)', padding: '16px' }}>
-              <div style={{ height: '150px', background: work.image_url ? `url(${work.image_url}) center/cover` : work.color, marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', ...(!work.image_url && { color: '#ffffff', fontSize: '2rem' }) }}>
+              <div style={{ height: '150px', background: work.image_url ? `url(${work.image_url.split(',')[0]}) center/cover` : work.color, marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', ...(!work.image_url && { color: '#ffffff', fontSize: '2rem' }) }}>
                 {!work.image_url && work.title.charAt(0)}
               </div>
               <h3 style={{ color: '#F8F7F4', margin: '0 0 4px', fontSize: '16px' }}>{work.title}</h3>
@@ -144,8 +144,8 @@ export default function WorksAdminPage() {
               </div>
               
               <div>
-                <label style={{ display: 'block', color: '#6B6B6B', fontSize: '13px', marginBottom: '8px' }}>Image URL</label>
-                <input name="image_url" defaultValue={editingWork?.image_url} placeholder="https://..." style={{ width: '100%', padding: '12px', background: '#0C0C0C', color: '#FFF', border: '1px solid #333' }} />
+                <label style={{ display: 'block', color: '#6B6B6B', fontSize: '13px', marginBottom: '8px' }}>Images (une URL par ligne)</label>
+                <textarea name="image_url" defaultValue={editingWork && editingWork.image_url ? editingWork.image_url.split(',').join('\n') : ''} placeholder="https://image1.jpg&#10;https://image2.jpg" rows={4} style={{ width: '100%', padding: '12px', background: '#0C0C0C', color: '#FFF', border: '1px solid #333' }} />
               </div>
 
               <div>

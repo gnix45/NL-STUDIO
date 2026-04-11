@@ -1,11 +1,20 @@
-import { IconInstagram, IconBehance, IconMail } from '@/components/icons'
+import { IconInstagram, IconMail } from '@/components/icons'
+
+// Add a simple Facebook Icon local component if not available in icons
+const IconFacebook = ({ size = 24, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M22.675 0H1.325C.593 0 0 .593 0 1.325v21.351C0 23.407.593 24 1.325 24H12.82v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12V24h6.116c.73 0 1.323-.593 1.323-1.325V1.325C24 .593 23.407 0 22.675 0z"/>
+  </svg>
+)
 
 interface ContactProps {
-  content: Record<string, string>
+  content: "Record<string, string>" | any
+  social?: "Record<string, string>" | any
 }
 
-export function ContactSection({ content }: ContactProps) {
-  const c = content
+export function ContactSection({ content, social }: ContactProps) {
+  const c = content || {}
+  const s = social || {}
   const whatsappUrl = `https://wa.me/${(c.whatsapp || '+237677000000').replace(/[^0-9]/g, '')}`
 
   return (
@@ -107,7 +116,7 @@ export function ContactSection({ content }: ContactProps) {
           }}
         >
           <a
-            href={c.instagram || 'https://instagram.com/nl.studio'}
+            href={s.instagram || 'https://instagram.com/nl.studio'}
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Instagram"
@@ -129,10 +138,10 @@ export function ContactSection({ content }: ContactProps) {
           </a>
 
           <a
-            href={c.behance || 'https://behance.net/nlstudio'}
+            href={s.facebook || 'https://facebook.com/nlstudio'}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Behance"
+            aria-label="Facebook"
             className="hover-underline"
             style={{
               color: '#6B6B6B',
@@ -146,12 +155,12 @@ export function ContactSection({ content }: ContactProps) {
               transition: 'color 0.2s',
             }}
           >
-            <IconBehance size={18} color="#6B6B6B" />
-            Behance
+            <IconFacebook size={18} color="#6B6B6B" />
+            Facebook
           </a>
 
           <a
-            href={`mailto:${c.email || 'tectrib@gmail.com'}`}
+            href={`mailto:${c.email || 'nlstudio203@gmail.com'}`}
             aria-label="Email"
             className="hover-underline"
             style={{
@@ -174,3 +183,4 @@ export function ContactSection({ content }: ContactProps) {
     </section>
   )
 }
+

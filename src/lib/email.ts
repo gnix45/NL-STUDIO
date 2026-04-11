@@ -183,3 +183,41 @@ export async function sendFailureEmail(data: FailureEmailData): Promise<void> {
     html: failureTemplate(data),
   })
 }
+
+export interface AdminNotificationData {
+  buyerName: string
+  buyerEmail: string
+  buyerPhone: string
+  productName: string
+  variantName: string | null
+  deliveryAddress: string | null
+  amount: number
+  transId: string
+}
+
+export async function sendAdminOrderNotification(data: AdminNotificationData): Promise<void> {
+  const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER
+  if (!adminEmail) return
+
+  const html = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+      <h2 style="color: #D42B2B;">Nouvelle Commande: ${data.productName}</h2>
+      <ul style="list-style: none; padding: 0;">
+        <li style="margin-bottom: 8px;"><strong>Client:</strong> ${data.buyerName}</li>
+        <li style="margin-bottom: 8px;"><strong>Email:</strong> ${data.buyerEmail}</li>
+        <li style="margin-bottom: 8px;"><strong>Tel:</strong> ${data.buyerPhone}</li>
+        <li style="margin-bottom: 8px;"><strong>Montant:</strong> ${formatXAF(data.amount)}</li>
+        <li style="margin-bottom: 8px;"><strong>Transaction ID:</strong> ${data.transId}</li>
+        ${data.variantName ? `<li style="margin-bottom: 8px;"><strong>Variante:</strong> ${data.variantName}</li>` : ''}
+        ${data.deliveryAddress ? `<li style="margin-bottom: 8px;"><strong>Adresse de livraison:</strong> ${data.deliveryAddress}</li>` : ''}
+      </ul>
+    </div>
+  `
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM,
+    to: adminEmail,
+    subject: `[NL.studio] Nvl Commande - ${data.productName}`,
+    html,
+  })
+}

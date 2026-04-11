@@ -2,7 +2,8 @@ import { type NextRequest } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { transIdSchema } from '@/lib/validation'
 import { getPaymentStatus } from '@/lib/fapshi'
-import { sendSuccessEmail, sendFailureEmail } from '@/lib/email'
+import { sendSuccessEmail, sendFailureEmail, sendAdminOrderNotification } from '@/lib/email'
+import { sendWhatsAppOrderConfirmation, sendWhatsAppAdminOrderNotification } from '@/lib/whatsapp'
 import { logActivity, maskEmail } from '@/lib/logger'
 import { getClientIP, errorResponse, rateLimitResponse } from '@/lib/security'
 import { statusLimiter } from '@/lib/rate-limit'
@@ -32,7 +33,7 @@ export async function GET(
     // Get order by transaction ID
     const { data: order } = await supabase
       .from('orders')
-      .select('id, product_name, product_link, buyer_name, buyer_email, buyer_phone, amount, status, email_sent, failure_email_sent, poll_count')
+      .select('id, product_name, product_link, buyer_name, buyer_email, buyer_phone, buyer_whatsapp, amount, status, email_sent, failure_email_sent, poll_count, variant_name, delivery_address')
       .eq('fapshi_trans_id', transId)
       .single()
 
@@ -64,27 +65,55 @@ export async function GET(
         .update({ status: 'successful', email_sent: true, updated_at: new Date().toISOString() })
         .eq('id', order.id)
 
-      // Send success email
+      // Send success email & WhatsApp
       try {
-        await sendSuccessEmail({
-          buyerName: order.buyer_name,
-          buyerEmail: order.buyer_email,
-          productName: order.product_name,
-          productLink: order.product_link,
-          amount: order.amount,
-          transId,
-        })
+        await Promise.allSettled([
+          sendSuccessEmail({
+            buyerName: order.buyer_name,
+            buyerEmail: order.buyer_email,
+            productName: order.product_name,
+            productLink: order.product_link,
+            amount: order.amount,
+            transId,
+          }),
+          sendWhatsAppOrderConfirmation({
+            buyerName: order.buyer_name,
+            buyerWhatsapp: order.buyer_whatsapp,
+            productName: order.product_name,
+            productLink: order.product_link,
+          })
+        ])
 
         await logActivity({
           type: 'email_sent',
-          message: `Email de confirmation envoye a ${maskEmail(order.buyer_email)}`,
+          message: `Confirmations (Email & WhatsApp) envoyees a ${maskEmail(order.buyer_email)}`,
           metadata: { orderId: order.id, type: 'success' },
         })
+
+        await Promise.allSettled([
+          sendAdminOrderNotification({
+            buyerName: order.buyer_name,
+            buyerEmail: order.buyer_email,
+            buyerPhone: order.buyer_phone,
+            productName: order.product_name,
+            variantName: order.variant_name,
+            deliveryAddress: order.delivery_address,
+            amount: order.amount,
+            transId,
+          }),
+          sendWhatsAppAdminOrderNotification({
+            buyerName: order.buyer_name,
+            buyerPhone: order.buyer_phone,
+            buyerWhatsapp: order.buyer_whatsapp,
+            productName: order.product_name,
+            amount: order.amount,
+          })
+        ])
       } catch (emailErr) {
-        console.error('[payment-status] Email send failed:', emailErr)
+        console.error('[payment-status] Notification dispatch failed:', emailErr)
         await logActivity({
           type: 'email_failed',
-          message: `Echec envoi email a ${maskEmail(order.buyer_email)}`,
+          message: `Echec envoi notifications a ${maskEmail(order.buyer_email)}`,
           severity: 'error',
           metadata: { orderId: order.id, error: String(emailErr) },
         })

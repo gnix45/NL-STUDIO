@@ -30,6 +30,9 @@ export default function AdminLoginPage() {
         return
       }
 
+      // Notify asynchronously for admin security event tracking 
+      fetch('/api/admin/notify-login', { method: 'POST' }).catch(() => {})
+
       router.push('/admin')
       router.refresh()
     } catch {

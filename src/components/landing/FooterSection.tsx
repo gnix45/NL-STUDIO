@@ -1,7 +1,24 @@
 import Link from 'next/link'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 
-export function FooterSection() {
+export async function FooterSection() {
+  const supabase = createServiceRoleClient()
   const year = new Date().getFullYear()
+
+  // Fetch social links and email
+  const { data: pageContent } = await supabase
+    .from('page_content')
+    .select('section, key, value')
+    .in('section', ['social', 'contact'])
+
+  const getVal = (section: string, key: string, fallback: string) => {
+    const item = pageContent?.find(c => c.section === section && c.key === key)
+    return item ? item.value : fallback
+  }
+
+  const instagramLink = getVal('social', 'instagram', 'https://instagram.com/nl.studio')
+  const facebookLink = getVal('social', 'facebook', 'https://facebook.com/nlstudio')
+  const contactEmail = getVal('contact', 'email', 'nlstudio203@gmail.com')
 
   return (
     <footer
@@ -62,9 +79,9 @@ export function FooterSection() {
         {/* Social Column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <span style={{ color: '#F8F7F4', fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>Réseaux sociaux</span>
-          <a href="https://instagram.com/nl.studio" target="_blank" rel="noopener noreferrer" style={{ color: '#6B6B6B', textDecoration: 'none', fontSize: '13px', transition: 'color 0.2s' }}>Instagram</a>
-          <a href="https://behance.net/nlstudio" target="_blank" rel="noopener noreferrer" style={{ color: '#6B6B6B', textDecoration: 'none', fontSize: '13px', transition: 'color 0.2s' }}>Behance</a>
-          <a href="mailto:tectrib@gmail.com" style={{ color: '#6B6B6B', textDecoration: 'none', fontSize: '13px', transition: 'color 0.2s' }}>Email</a>
+          {instagramLink && <a href={instagramLink} target="_blank" rel="noopener noreferrer" style={{ color: '#6B6B6B', textDecoration: 'none', fontSize: '13px', transition: 'color 0.2s' }}>Instagram</a>}
+          {facebookLink && <a href={facebookLink} target="_blank" rel="noopener noreferrer" style={{ color: '#6B6B6B', textDecoration: 'none', fontSize: '13px', transition: 'color 0.2s' }}>Facebook</a>}
+          {contactEmail && <a href={`mailto:${contactEmail}`} style={{ color: '#6B6B6B', textDecoration: 'none', fontSize: '13px', transition: 'color 0.2s' }}>Email</a>}
         </div>
       </div>
 
