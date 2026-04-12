@@ -45,6 +45,7 @@ export default function AdminProductsPage() {
   const [isPhysical, setIsPhysical] = useState(false)
   const [variants, setVariants] = useState<ProductVariant[]>([])
   const [saving, setSaving] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [formError, setFormError] = useState('')
 
   const fetchProducts = useCallback(async () => {
@@ -137,6 +138,33 @@ export default function AdminProductsPage() {
       setFormError('Erreur de connexion.')
     }
     setSaving(false)
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return
+    
+    setUploadingImage(true)
+    const file = e.target.files[0]
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: formData
+      })
+      const data = await res.json()
+      if (res.ok && data.url) {
+        setImageUrl(data.url)
+      } else {
+        alert(data.error || 'Echec du telechargement')
+      }
+    } catch (err) {
+      console.error(err)
+      alert('Erreur de connexion lors du telechargement')
+    } finally {
+      setUploadingImage(false)
+    }
   }
 
   const handleDelete = async (id: string) => {
@@ -311,12 +339,30 @@ export default function AdminProductsPage() {
                 />
               </div>
 
-              <input
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="URL de l'image (optionnel)"
-                style={{ padding: '10px 14px', background: '#0C0C0C', border: '1px solid #333', color: '#F8F7F4', fontSize: '14px', boxSizing: 'border-box' }}
-              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: '#0C0C0C', padding: '12px', borderRadius: '4px', border: '1px solid #333' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label style={{ color: '#F8F7F4', fontSize: '13px' }}>Image du Produit :</label>
+                  {uploadingImage && <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#6B6B6B', fontSize: '12px' }}><IconSpinner size={14} color="#D42B2B" /> Téléchargement...</div>}
+                </div>
+                
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  disabled={uploadingImage}
+                  style={{ color: '#6B6B6B', fontSize: '13px' }}
+                />
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ color: '#6B6B6B', fontSize: '12px' }}>Ou collez une URL :</span>
+                  <input
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                    placeholder="https://..."
+                    style={{ flex: 1, padding: '8px 12px', background: '#1A1A1A', border: '1px solid #333', color: '#F8F7F4', fontSize: '13px', boxSizing: 'border-box' }}
+                  />
+                </div>
+              </div>
               <input
                 value={productLink}
                 onChange={(e) => setProductLink(e.target.value)}

@@ -12,6 +12,8 @@ export default function WorksAdminPage() {
   const [editingWork, setEditingWork] = useState<any | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [uploadingImages, setUploadingImages] = useState(false)
+  const [imageUrlInput, setImageUrlInput] = useState('')
 
   const fetchWorks = async () => {
     setLoading(true)
@@ -30,6 +32,7 @@ export default function WorksAdminPage() {
 
   const handleOpenModal = (work: any | null = null) => {
     setEditingWork(work)
+    setImageUrlInput(work && work.image_url ? work.image_url.split(',').join('\n') : '')
     setIsModalOpen(true)
   }
 
@@ -41,6 +44,38 @@ export default function WorksAdminPage() {
     } catch (err) {
       console.error(err)
       alert('Erreur lors de la suppression')
+    }
+  }
+
+  const handleFilesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return
+    const files = Array.from(e.target.files)
+    
+    setUploadingImages(true)
+    
+    try {
+      const uploadedUrls = []
+      for (const file of files) {
+        const formData = new FormData()
+        formData.append('file', file)
+        const res = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: formData
+        })
+        const data = await res.json()
+        if (res.ok && data.url) {
+          uploadedUrls.push(data.url)
+        }
+      }
+      
+      if (uploadedUrls.length > 0) {
+        const newUrls = uploadedUrls.join('\n')
+        setImageUrlInput(prev => prev ? `${prev}\n${newUrls}` : newUrls)
+      }
+    } catch (err) {
+      alert('Erreur reseau lors du telechargement')
+    } finally {
+      setUploadingImages(false)
     }
   }
 
@@ -128,6 +163,19 @@ export default function WorksAdminPage() {
             </h2>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                <label style={{ color: '#F8F7F4', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input
+                    name="active"
+                    value="true"
+                    type="checkbox"
+                    defaultChecked={editingWork ? editingWork.active : true}
+                    style={{ width: '16px', height: '16px', accentColor: '#D42B2B' }}
+                  />
+                  Publier (Visible dans le portfolio)
+                </label>
+              </div>
+
               <div>
                 <label style={{ display: 'block', color: '#6B6B6B', fontSize: '13px', marginBottom: '8px' }}>Titre</label>
                 <input name="title" defaultValue={editingWork?.title} required style={{ width: '100%', padding: '12px', background: '#0C0C0C', color: '#FFF', border: '1px solid #333' }} />
@@ -143,9 +191,43 @@ export default function WorksAdminPage() {
                 <textarea name="description" defaultValue={editingWork?.description} rows={3} style={{ width: '100%', padding: '12px', background: '#0C0C0C', color: '#FFF', border: '1px solid #333' }} />
               </div>
               
-              <div>
-                <label style={{ display: 'block', color: '#6B6B6B', fontSize: '13px', marginBottom: '8px' }}>Images (une URL par ligne)</label>
-                <textarea name="image_url" defaultValue={editingWork && editingWork.image_url ? editingWork.image_url.split(',').join('\n') : ''} placeholder="https://image1.jpg&#10;https://image2.jpg" rows={4} style={{ width: '100%', padding: '12px', background: '#0C0C0C', color: '#FFF', border: '1px solid #333' }} />
+              <div style={{ background: '#0C0C0C', padding: '12px', borderRadius: '4px', border: '1px solid #333' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ color: '#F8F7F4', fontSize: '13px' }}>Images du Portfolio :</label>
+                  {uploadingImages && <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#6B6B6B', fontSize: '12px' }}><IconSpinner size={14} color="#D42B2B" /> Téléchargement...</div>}
+                </div>
+                
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFilesUpload}
+                  disabled={uploadingImages}
+                  style={{ color: '#6B6B6B', fontSize: '13px', marginBottom: '12px', display: 'block' }}
+                />
+
+                <input type="hidden" name="image_url" value={imageUrlInput} />
+                
+                {imageUrlInput && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '8px', marginTop: '12px' }}>
+                    {imageUrlInput.split('\n').filter(Boolean).map((url, idx) => (
+                      <div key={idx} style={{ position: 'relative', width: '100%', aspectRatio: '1', borderRadius: '4px', overflow: 'hidden', border: '1px solid #333' }}>
+                        <img src={url} alt="Aperçu" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newUrls = imageUrlInput.split('\n').filter(Boolean)
+                            newUrls.splice(idx, 1)
+                            setImageUrlInput(newUrls.join('\n'))
+                          }}
+                          style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(212,43,43,0.9)', border: 'none', borderRadius: '50%', width: '20px', height: '20px', color: '#FFF', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <IconTrash size={12} color="#FFF" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>

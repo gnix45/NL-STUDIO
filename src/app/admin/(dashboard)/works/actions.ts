@@ -43,6 +43,7 @@ export async function createWork(formData: FormData) {
   if (error) throw new Error(error.message)
   revalidatePath('/admin/works')
   revalidatePath('/')
+  revalidatePath('/portfolio')
 }
 
 export async function updateWork(id: string, formData: FormData) {
@@ -68,6 +69,7 @@ export async function updateWork(id: string, formData: FormData) {
   if (error) throw new Error(error.message)
   revalidatePath('/admin/works')
   revalidatePath('/')
+  revalidatePath('/portfolio')
 }
 
 export async function deleteWork(id: string) {
@@ -80,4 +82,5 @@ export async function deleteWork(id: string) {
   if (error) throw new Error(error.message)
   revalidatePath('/admin/works')
   revalidatePath('/')
+  revalidatePath('/portfolio')
 }

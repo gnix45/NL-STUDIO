@@ -44,6 +44,9 @@ export async function middleware(request: NextRequest) {
           )
         },
       },
+      cookieOptions: {
+        maxAge: 3600,
+      },
     }
   )
 
@@ -55,6 +58,17 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL('/admin/login', request.url)
     return NextResponse.redirect(loginUrl)
   }
+
+  // Activity sliding window: Refresh the browser cookie expiration to 1h from NOW
+  const supabaseCookies = request.cookies.getAll().filter(c => c.name.startsWith('sb-'))
+  supabaseCookies.forEach(cookie => {
+    response.cookies.set(cookie.name, cookie.value, {
+      path: '/',
+      maxAge: 3600,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+    })
+  })
 
   return response
 }
