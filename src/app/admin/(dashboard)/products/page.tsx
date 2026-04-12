@@ -340,7 +340,7 @@ export default function AdminProductsPage() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: '#0C0C0C', padding: '12px', borderRadius: '4px', border: '1px solid #333' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <label style={{ color: '#F8F7F4', fontSize: '13px' }}>Image du Produit :</label>
                   {uploadingImage && <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#6B6B6B', fontSize: '12px' }}><IconSpinner size={14} color="#D42B2B" /> Téléchargement...</div>}
                 </div>
@@ -350,18 +350,21 @@ export default function AdminProductsPage() {
                   accept="image/*"
                   onChange={handleFileUpload}
                   disabled={uploadingImage}
-                  style={{ color: '#6B6B6B', fontSize: '13px' }}
+                  style={{ color: '#6B6B6B', fontSize: '13px', marginBottom: '12px' }}
                 />
                 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ color: '#6B6B6B', fontSize: '12px' }}>Ou collez une URL :</span>
-                  <input
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="https://..."
-                    style={{ flex: 1, padding: '8px 12px', background: '#1A1A1A', border: '1px solid #333', color: '#F8F7F4', fontSize: '13px', boxSizing: 'border-box' }}
-                  />
-                </div>
+                {imageUrl && (
+                  <div style={{ position: 'relative', width: '120px', aspectRatio: '1', borderRadius: '4px', overflow: 'hidden', border: '1px solid #333' }}>
+                    <img src={imageUrl} alt="Aperçu" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <button
+                      type="button"
+                      onClick={() => setImageUrl('')}
+                      style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(212,43,43,0.9)', border: 'none', borderRadius: '50%', width: '20px', height: '20px', color: '#FFF', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <IconTrash size={12} color="#FFF" />
+                    </button>
+                  </div>
+                )}
               </div>
               <input
                 value={productLink}

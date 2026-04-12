@@ -12,7 +12,7 @@ export default async function PortfolioPage() {
   // Fetch all active portfolio elements unconditionally ordered by creation date
   const { data: works } = await supabase
     .from('works')
-    .select('label, title, color, image_url')
+    .select('id, label, title, description, color, image_url')
     .eq('active', true)
     .order('created_at', { ascending: false })
 
