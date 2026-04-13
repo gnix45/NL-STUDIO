@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { v2 as cloudinary } from 'cloudinary'
-import { createClient } from '@/lib/supabase/server'
+import { verifyAdminSession } from '@/lib/security'
 
 // Initialize Cloudinary with Env Variables
 cloudinary.config({
@@ -12,10 +12,10 @@ cloudinary.config({
 export async function POST(req: Request) {
   try {
     // 1. Verify Authentication Context securely using Supabase
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const user = await verifyAdminSession()
 
-    if (authError || !user || user.email !== process.env.ADMIN_EMAIL) {
+    if (!user) {
+      console.error('[Upload API] Authentication failed (401)')
       return NextResponse.json({ error: 'Session invalide ou non-autorisee' }, { status: 401 })
     }
 
