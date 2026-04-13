@@ -13,9 +13,9 @@ export async function POST(req: Request) {
   try {
     // 1. Verify Authentication Context securely using Supabase
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session || session.user.email !== process.env.ADMIN_EMAIL) {
+    if (authError || !user || user.email !== process.env.ADMIN_EMAIL) {
       return NextResponse.json({ error: 'Session invalide ou non-autorisee' }, { status: 401 })
     }
 
